@@ -93,8 +93,6 @@ function gen_rnd_JSON_file_tree(file_tree_props) {
     let file_tree = {};
     let nesting_l, nodes_l, cells_l, key_l, val_l;
 
-    let diff;
-
     nesting_l = file_tree_props.nesting_in;
     nodes_l = gen_rnd_int(file_tree_props.nodes_in_min, file_tree_props.nodes_in_max);
     cells_l = gen_rnd_int(file_tree_props.cells_in_min, file_tree_props.cells_in_max);
@@ -114,6 +112,7 @@ function gen_rnd_JSON_file_tree(file_tree_props) {
         return typeof obj === 'object';
     }
 
+    let first = true;
     function gen_nodes(curr_depth, node) {
         if (curr_depth === nesting_l - 1) {
             return;
@@ -121,7 +120,16 @@ function gen_rnd_JSON_file_tree(file_tree_props) {
 
         ++curr_depth;
 
-        nodes_l = gen_rnd_int(file_tree_props.nodes_in_min, file_tree_props.nodes_in_max);
+
+        let good_luck = Math.random();
+        if (good_luck >= 0 / nesting_l || first === true) {
+            nodes_l = gen_rnd_int(file_tree_props.nodes_in_min, file_tree_props.nodes_in_max);
+            first = false;
+        }
+        else {
+            nodes_l = 0;
+        }
+
         for (let i = 0; i < nodes_l; ++i) {
             key_l = gen_rnd_int(file_tree_props.key_in_min, file_tree_props.key_in_max);
             let k = gen_rnd_str(key_l);
@@ -194,9 +202,9 @@ function gen_rnd_JSON_file_tree(file_tree_props) {
     gen_cells(0, file_tree);
     calc_difficulty(0, file_tree);
 
-    // console.log(JSON.stringify(file_tree));
-    // console.log(hard_num);
-    // console.log(hard_denum);
+    console.log(JSON.stringify(file_tree));
+    console.log(hard_num);
+    console.log(hard_denum);
     console.log("Gen file tree with difficulty: " + hard_num / hard_denum);
 
     return [file_tree, hard_num / hard_denum];
@@ -259,6 +267,27 @@ function connection_foo(ws) {
 
                             send_JSON_data(clients[id], {
                                 'command': 1000,
+                                'code': 0,
+                                'file_tree_data': file_tree_data
+                            });
+                        }
+
+                        if (code == "1") {
+                            send_JSON_data(clients[id], {
+                                'command': 1000,
+                                'code': 1,
+                                'file_tree_data': file_tree_data
+                            });
+                        }
+                    }
+                }
+
+                if (command === 1001) {
+                    if (!is_undef(code)) {
+                        if (code == "0") {
+                            console.log(data.file_send_seq);
+                            send_JSON_data(clients[id], {
+                                'command': 1001,
                                 'code': 0
                             });
                         }
