@@ -1,6 +1,30 @@
 const ws = require('ws');
 const fs = require('fs');
 
+const cwd = ".";
+
+function write_file_sync(dir, file_name, data) {
+    let path = cwd + "/" + dir + "/" + file_name;
+    fs.writeFileSync(path, data);
+}
+function write_file(dir, file_name, data) {
+    let path = cwd + "/" + dir + "/" + file_name;
+    function callback(err) {
+        if (err) throw err;
+    }
+    fs.writeFile(path, data);
+}
+function read_file_sync(dir, file_name) {
+    let path = cwd + "/" + dir + "/" + file_name;
+    return fs.readFileSync(path);
+}
+function mk_dir_sync(dir) {
+    let path = cwd + "/" + dir;
+    if (!fs.existsSync(path))
+        fs.mkdirSync(path);
+
+}
+
 function host_server(ip, port, connection_foo) {
     serv = new ws.Server({
         host: ip,
@@ -65,33 +89,13 @@ function gen_rnd_str(length) {
     return result.join('');
 }
 
-let clients = {};
-
-let data;
-
-try {
-    data = JSON.parse(fs.readFileSync('./mine/ws/data.json'));
-} catch {
-    data = [];
-}
-
-/*
-setInterval(function () {
-    function callback(err) {
-        if (err) throw err;
-    }
-    fs.writeFile('./mine/ws/logins.json', JSON.stringify(logins), callback);
-}, 10000);
-*/
-
-let file_tree_props = {};
 function gen_rnd_JSON_file_tree(file_tree_props) {
     let file_tree = {};
     let nesting_l, nodes_l, cells_l, key_l, val_l;
 
     let diff;
 
-    nesting_l = gen_rnd_int(file_tree_props.nesting_in_min, file_tree_props.nesting_in_max);
+    nesting_l = file_tree_props.nesting_in;
     nodes_l = gen_rnd_int(file_tree_props.nodes_in_min, file_tree_props.nodes_in_max);
     cells_l = gen_rnd_int(file_tree_props.cells_in_min, file_tree_props.cells_in_max);
     key_l = gen_rnd_int(file_tree_props.key_in_min, file_tree_props.key_in_max);
@@ -191,13 +195,25 @@ function gen_rnd_JSON_file_tree(file_tree_props) {
     calc_difficulty(0, file_tree);
 
     // console.log(JSON.stringify(file_tree));
-    console.log(hard_num);
-    console.log(hard_denum);
-    console.log(hard_num / hard_denum);
+    // console.log(hard_num);
+    // console.log(hard_denum);
+    console.log("Gen file tree with difficulty: " + hard_num / hard_denum);
 
-    return file_tree;
+    return [file_tree, hard_num / hard_denum];
 }
 
+let file_tree_data;
+let curr_file_tree_id;
+try {
+    file_tree_data = JSON.parse(read_file_sync("JSON", "data.json"));
+    curr_file_tree_id = parseInt(file_tree_data.curr_file_tree_id);
+}
+catch {
+    file_tree_data = {};
+    curr_file_tree_id = 0;
+}
+
+let clients = {};
 function connection_foo(ws) {
     let id = Math.random();
 
@@ -220,16 +236,30 @@ function connection_foo(ws) {
                 if (command === 1000) {
                     if (!is_undef(code)) {
                         if (code == "0") {
-                            file_tree_props = Object.assign(data);
+                            let file_tree_props = Object.assign(data);
                             delete file_tree_props.command;
                             delete file_tree_props.code;
 
-                            let file_tree = gen_rnd_JSON_file_tree(file_tree_props);
+                            mk_dir_sync("JSON" + "/" + data.dir_in);
+                            for (let i = 0; i < data.amount_in; ++i) {
+                                let res = gen_rnd_JSON_file_tree(file_tree_props);
+                                let file_tree = res[0];
+                                write_file_sync(
+                                    "JSON" + "/" + data.dir_in,
+                                    curr_file_tree_id + ".json", JSON.stringify(file_tree)
+                                );
+                                file_tree_data[curr_file_tree_id] = {};
+                                file_tree_data[curr_file_tree_id].difficulty = res[1];
+                                file_tree_data[curr_file_tree_id].path = data.dir_in;
+                                ++curr_file_tree_id;
+                            }
+
+                            file_tree_data.curr_file_tree_id = curr_file_tree_id;
+                            write_file_sync("JSON", "data.json", JSON.stringify(file_tree_data));
 
                             send_JSON_data(clients[id], {
                                 'command': 1000,
-                                'code': 0,
-                                'file_tree': file_tree
+                                'code': 0
                             });
                         }
                     }

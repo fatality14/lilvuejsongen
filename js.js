@@ -66,8 +66,7 @@ send_in.onclick = function () {
         "command": 1000,
         "code": 0,
 
-        "nesting_in_min": nesting_in_min.value,
-        "nesting_in_max": nesting_in_max.value,
+        "nesting_in": nesting_in.value,
 
         "nodes_in_min": nodes_in_min.value,
         "nodes_in_max": nodes_in_max.value,
@@ -79,6 +78,9 @@ send_in.onclick = function () {
         "key_in_max": key_in_max.value,
 
         "val_in_min": val_in_min.value,
-        "val_in_max": val_in_max.value
+        "val_in_max": val_in_max.value,
+
+        "amount_in": amount_in.value,
+        "dir_in": dir_in.value
     });
 }
