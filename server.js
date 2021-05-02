@@ -54,6 +54,17 @@ function gen_rnd_int(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function gen_rnd_str(length) {
+    var result = [];
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+        result.push(characters.charAt(Math.floor(Math.random() *
+            charactersLength)));
+    }
+    return result.join('');
+}
+
 let clients = {};
 
 let data;
@@ -78,6 +89,8 @@ function gen_rnd_JSON_file_tree(file_tree_props) {
     let file_tree = {};
     let nesting_l, nodes_l, cells_l, key_l, val_l;
 
+    let diff;
+
     nesting_l = gen_rnd_int(file_tree_props.nesting_in_min, file_tree_props.nesting_in_max);
     nodes_l = gen_rnd_int(file_tree_props.nodes_in_min, file_tree_props.nodes_in_max);
     cells_l = gen_rnd_int(file_tree_props.cells_in_min, file_tree_props.cells_in_max);
@@ -93,19 +106,8 @@ function gen_rnd_JSON_file_tree(file_tree_props) {
         return child_amount;
     }
 
-    function is_node(obj) {
+    function is_obj(obj) {
         return typeof obj === 'object';
-    }
-
-    function gen_rnd_str(length) {
-        var result = [];
-        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        var charactersLength = characters.length;
-        for (var i = 0; i < length; i++) {
-            result.push(characters.charAt(Math.floor(Math.random() *
-                charactersLength)));
-        }
-        return result.join('');
     }
 
     function gen_nodes(curr_depth, node) {
@@ -141,20 +143,57 @@ function gen_rnd_JSON_file_tree(file_tree_props) {
 
         for (let key in node) {
             cells_l = gen_rnd_int(file_tree_props.cells_in_min, file_tree_props.cells_in_max);
-            for (let i = 0; i < cells_l; ++i) {
-                key_l = gen_rnd_int(file_tree_props.key_in_min, file_tree_props.key_in_max);
-                val_l = gen_rnd_int(file_tree_props.val_in_min, file_tree_props.val_in_max);
-                let k = gen_rnd_str(key_l);
-                node[key][k] = gen_rnd_str(val_l);
+            if (is_obj(node)) {
+                for (let i = 0; i < cells_l; ++i) {
+                    key_l = gen_rnd_int(file_tree_props.key_in_min, file_tree_props.key_in_max);
+                    val_l = gen_rnd_int(file_tree_props.val_in_min, file_tree_props.val_in_max);
+                    let k = gen_rnd_str(key_l);
+                    node[key][k] = gen_rnd_str(val_l);
+                }
             }
             gen_cells(curr_depth, node[key]);
         }
     }
 
+    let hard_num = 0, hard_denum = 0;
+    function calc_difficulty(curr_depth, node) {
+        if (curr_depth === 0) {
+            for (let key in node) {
+                if (!is_obj(node[key])) {
+                    // console.log(node[key]);
+                    ++hard_denum;
+                }
+            }
+        }
+        if (curr_depth === nesting_l - 1) {
+            return;
+        }
+
+        ++curr_depth;
+
+        for (let key in node) {
+            if (is_obj(node[key])) {
+                for (let key1 in node[key]) {
+                    if (!is_obj(node[key][key1])) {
+                        // console.log(node[key][key1]);
+                        ++hard_denum;
+                    }
+                    // console.log(node[key][key1]);
+                    ++hard_num;
+                }
+            }
+            calc_difficulty(curr_depth, node[key]);
+        }
+    }
+
     gen_nodes(0, file_tree);
     gen_cells(0, file_tree);
+    calc_difficulty(0, file_tree);
 
-    console.log(JSON.stringify(file_tree));
+    // console.log(JSON.stringify(file_tree));
+    console.log(hard_num);
+    console.log(hard_denum);
+    console.log(hard_num / hard_denum);
 
     return file_tree;
 }
