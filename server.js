@@ -5,12 +5,6 @@ const cwd = ".";
 
 const http = require('http')
 
-
-
-const data = JSON.stringify({
-    todo: 'Buy the milk'
-})
-
 let POST_statuses = [];
 function POST_request(host, port, data) {
     data = JSON.stringify(data);
