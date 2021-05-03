@@ -1,0 +1,1 @@
+C:\AYNP\NodeJS\node.exe C:\AYNP\NodeJS\mine\ws\listener.js

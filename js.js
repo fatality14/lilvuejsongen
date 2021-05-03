@@ -28,6 +28,7 @@ function error_foo(e) {
 
 let file_seq = [];
 let file_send_seq = {};
+let file_send_seq_counter = 0;
 function configure_file_selection(file_tree_data) {
     let folders = {};
     for (let key in file_tree_data) {
@@ -67,9 +68,14 @@ function configure_file_selection(file_tree_data) {
     }
     add_seq_in.onclick = function () {
         if (file_seq.length !== 0) {
-            file_send_seq[time_in.value] = file_seq;
+            file_send_seq[file_send_seq_counter] = {
+                "file_seq": file_seq,
+                "time": time_in.value
+            };
+            ++file_send_seq_counter;
             file_seq = [];
         }
+        console.log(file_send_seq_counter);
         console.log(file_send_seq);
     }
 }

@@ -3,6 +3,45 @@ const fs = require('fs');
 
 const cwd = ".";
 
+const http = require('http')
+
+
+
+const data = JSON.stringify({
+    todo: 'Buy the milk'
+})
+
+let POST_statuses = [];
+function POST_request(host, port, data) {
+    data = JSON.stringify(data);
+    const options = {
+        hostname: host,
+        port: port,
+        path: '',
+        method: 'POST',
+        headers: {
+            'Content-Length': data.length
+        }
+    }
+
+    const req = http.request(options, res => {
+        POST_statuses.push(res.statusCode);
+
+        res.on('data', d => {
+            process.stdout.write(d)
+        })
+    })
+
+    req.on('error', error => {
+        console.error(error)
+    })
+
+    //console.log(data);
+
+    req.write(data)
+    req.end()
+}
+
 function write_file_sync(dir, file_name, data) {
     let path = cwd + "/" + dir + "/" + file_name;
     fs.writeFileSync(path, data);
@@ -222,6 +261,13 @@ catch {
 }
 
 let clients = {};
+let time_list = [];
+let file_seq_list = [];
+let timeouts = [];
+let last_interval,
+    interval_progress = 0,
+    interval_steps = [],
+    curr_interval = 0;
 function connection_foo(ws) {
     let id = Math.random();
 
@@ -286,6 +332,87 @@ function connection_foo(ws) {
                     if (!is_undef(code)) {
                         if (code == "0") {
                             console.log(data.file_send_seq);
+                            let file_send_seq = data.file_send_seq;
+
+                            time_list = [];
+                            file_seq_list = [];
+                            for (let key in file_send_seq) {
+                                time_list.push(parseFloat(file_send_seq[key].time));
+                                file_seq_list.push(file_send_seq[key].file_seq);
+                            }
+                            //console.log(time_list);
+                            //console.log(file_seq_list);
+
+                            if (time_list.length === 0 || file_seq_list.length === 0) {
+                                return;
+                            }
+
+                            if (timeouts !== undefined) {
+                                for (let i = 0; i < timeouts.length; ++i) {
+                                    clearTimeout(timeouts[i]);
+                                }
+                            }
+                            if (last_interval !== undefined) {
+                                clearInterval(last_interval);
+                                interval_progress = 0;
+                            }
+
+                            let last_time = 0;
+                            for (let i = 0; i < time_list.length; ++i) {
+                                time_list[i] += 1 / 60;
+
+                                //console.log(time_list[i]);
+
+                                timeouts.push(
+                                    setTimeout(function () {
+                                        //console.log("timeout");
+                                        if (last_interval !== undefined) {
+                                            clearInterval(last_interval);
+                                            interval_progress = 0;
+                                        }
+                                        last_interval = setInterval(function () {
+                                            ++interval_progress;
+                                            let curr_interval_m = curr_interval - 1;
+                                            //console.log(interval_progress);
+                                            //console.log("a " + curr_interval_m);
+                                            //console.log(file_seq_list[curr_interval_m]);
+                                            for (let key in file_seq_list[curr_interval_m]) {
+                                                //console.log("send " + file_seq_list[curr_interval_m][key]);
+                                                let file_id = file_seq_list[curr_interval_m][key] + "";
+                                                let file_path = file_tree_data[file_id].path;
+                                                let file = JSON.parse(read_file_sync("JSON" + "/" + file_path, file_id + ".json"));
+                                                //console.log(JSON.stringify(file));
+                                                POST_request("127.0.0.1", "8080", file);
+                                            }
+                                        }, 1000);
+
+                                        ++curr_interval;
+                                    }, last_time * 60 * 1000)
+                                );
+
+                                last_time += time_list[i];
+
+                                timeouts.push(
+                                    setTimeout(function () {
+                                        //console.log("timeout1");
+                                        if (last_interval !== undefined) {
+                                            clearInterval(last_interval);
+                                            interval_progress = 0;
+                                        }
+                                    }, last_time * 60 * 1000)
+                                );
+                            }
+
+                            setInterval(function () {
+                                //console.log(POST_statuses);
+                                for (let i = 0; i < POST_statuses.length; ++i) {
+                                    if (POST_statuses[i] !== 200) {
+                                        console.log("bad POST");
+                                    }
+                                }
+                                POST_statuses = [];
+                            }, 1000);
+
                             send_JSON_data(clients[id], {
                                 'command': 1001,
                                 'code': 0
