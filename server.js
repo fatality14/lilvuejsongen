@@ -268,6 +268,7 @@ let last_interval,
     interval_progress = 0,
     interval_steps = [],
     curr_interval = 0;
+let bad_posts = 0;
 function connection_foo(ws) {
     let id = Math.random();
 
@@ -384,6 +385,15 @@ function connection_foo(ws) {
                                                 //console.log(JSON.stringify(file));
                                                 POST_request("127.0.0.1", "8080", file);
                                             }
+
+                                            send_JSON_data(clients[id], {
+                                                'command': 1001,
+                                                'code': 1,
+                                                'curr_interval': curr_interval_m,
+                                                'interval_progress': interval_progress,
+                                                'interval_time': time_list[curr_interval_m],
+                                                'bad_posts': bad_posts
+                                            });
                                         }, 1000);
 
                                         ++curr_interval;
@@ -391,6 +401,14 @@ function connection_foo(ws) {
                                 );
 
                                 last_time += time_list[i];
+                                if (i !== 0) {
+                                    interval_steps.push(time_list[i] - time_list[i - 1]);
+                                    console.log(time_list[i] - time_list[i - 1]);
+                                }
+                                else {
+                                    interval_steps.push(time_list[i]);
+                                    console.log(time_list[i]);
+                                }
 
                                 timeouts.push(
                                     setTimeout(function () {
@@ -403,11 +421,13 @@ function connection_foo(ws) {
                                 );
                             }
 
+
                             setInterval(function () {
                                 //console.log(POST_statuses);
                                 for (let i = 0; i < POST_statuses.length; ++i) {
                                     if (POST_statuses[i] !== 200) {
                                         console.log("bad POST");
+                                        ++bad_posts;
                                     }
                                 }
                                 POST_statuses = [];

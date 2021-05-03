@@ -109,7 +109,10 @@ function msg_foo(e) {
             if (command === 1001) {
                 let code = data.code;
                 if (code === 0) {
-                    console.log("good");
+                    console.log("all set");
+                }
+                if (code === 1) {
+                    console.log(data);
                 }
             }
         }
