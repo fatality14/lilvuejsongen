@@ -29,7 +29,16 @@ body {
     padding: 10px;
 }
 
-.vue-input-p{
+.vue-input-p, .vue-input, .vue-button, .vue-select{
     text-align: center;
     font-size: 25px;
+}
+
+.vue-input, .vue-select{
+    width: 100%;
+}
+
+.vue-button{
+    width: 100%;
+    margin-top: 20px;
 }

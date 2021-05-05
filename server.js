@@ -27,6 +27,7 @@ function POST_request(host, port, data) {
     })
 
     req.on('error', error => {
+        POST_statuses.push("-1");
         console.error(error)
     })
 
