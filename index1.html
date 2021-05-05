@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <script src="res/vue.js"></script>
+
+    <link rel="stylesheet" href="res/vue-range-slider.min.css">
+    <script src="res/vue-range-slider.min.js"></script>
+</head>
+
+<body>
+    <div id="mode" class="demo">
+        <button v-for="tab in tabs" v-bind:key="tab" v-bind:class="['tab-button', { active: currentTab === tab }]"
+            v-on:click="currentTab = tab">
+            {{ tab }}
+        </button>
+
+        <component v-bind:is="currentTabComponent" class="tab"></component>
+    </div>
+    <script src="js.js"></script>
+</body>
+
+
+</html>

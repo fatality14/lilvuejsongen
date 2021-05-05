@@ -6,7 +6,7 @@ const server = http.createServer((req, res) => {
         data += chunk;
     })
     req.on('end', () => {
-        console.log(JSON.parse(data)); // 'Buy the milk'
+        console.log(JSON.parse(data));
         res.end();
     })
 })

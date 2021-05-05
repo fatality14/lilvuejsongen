@@ -1,3 +1,131 @@
+Vue.component("vue-two-range-slider", {
+    template: `
+    <div>
+    <p class ="vue-input-p">{{identify}}</p>
+    <vue-range-slider :bg-style="bgStyle" :tooltip-style="tooltipStyle" :process-style="processStyle" v-model="value"></vue-range-slider>
+    </div>
+    `,
+    props: {
+        'identify': null,
+        'min': {
+            default: 0
+        },
+        'max': {
+            default: 100
+        }
+    },
+    data() {
+        return {
+            value: [this.min, this.max]
+        }
+    },
+    created() {
+        this.bgStyle = {
+            backgroundColor: '#fff',
+            boxShadow: 'inset 0.5px 0.5px 3px 1px rgba(0,0,0,.36)'
+        }
+        this.tooltipStyle = {
+            backgroundColor: '#666',
+            borderColor: '#666'
+        }
+        this.processStyle = {
+            backgroundColor: '#999'
+        }
+        VueRangeSlider.methods.handleKeyup = () => console.log;
+        VueRangeSlider.methods.handleKeydown = () => console.log;
+    },
+    watch: {
+        value: {
+            handler: function () {
+                this.$emit('newdata', [this.value, this.identify]);
+            },
+            deep: true
+        }
+    }
+});
+
+Vue.component("vue-text-input", {
+    template: `
+    <div>
+    <p class ="vue-input-p">{{identify}}</p>
+    <input type="text" v-model="value_ret">
+    </div>
+    `,
+    props: {
+        'identify': {
+            default: "null"
+        },
+        'value_type': {
+            default: "int"
+        },
+        'value': {
+            default: ""
+        }
+    },
+    data() {
+        return {
+            value_ret: this.value
+        }
+    },
+    watch: {
+        value_ret: {
+            handler: function () {
+                if (this.value_type === "int") {
+                    this.$emit('newdata', [this.value_ret, this.identify]);
+                }
+                else if (this.value_type === "string") {
+
+                }
+                //...//
+            },
+            deep: true
+        }
+    }
+});
+
+Vue.component("tab-jsongeneration", {
+    template: `
+    <div>
+    <vue-text-input @newdata="handleData($event)" :identify="'1'"></vue-text-input>
+    <div>
+        <vue-two-range-slider :min="0" :max="100" @newdata="handleData($event)" :identify="'nodes'"></vue-two-range-slider>
+        <vue-two-range-slider :min="0" :max="100" @newdata="handleData($event)" :identify="'cells'"></vue-two-range-slider>
+        <vue-two-range-slider :min="0" :max="100" @newdata="handleData($event)" :identify="'key'"></vue-two-range-slider>
+        <vue-two-range-slider :min="0" :max="100" @newdata="handleData($event)" :identify="'val'"></vue-two-range-slider>
+    </div>
+    </div>
+    `,
+    methods: {
+        handleData: function (e) {
+            console.log(e);
+        }
+    },
+    data() {
+        return {
+            msg: 0
+        }
+    }
+});
+Vue.component("tab-datasending", {
+    template: `
+    <vue-two-range-slider></vue-two-range-slider>
+    `
+});
+
+new Vue({
+    el: "#mode",
+    data: {
+        currentTab: "JSON generation",
+        tabs: ["JSON generation", "Data sending"]
+    },
+    computed: {
+        currentTabComponent: function () {
+            return "tab-" + this.currentTab.toLowerCase().replace(/[_ ]/g, "");
+        }
+    }
+});
+
+/*
 function connect(addr, open_foo, msg_foo, close_foo, error_foo) {
     let sock = new WebSocket(addr);
     sock.onopen = open_foo;
@@ -12,7 +140,8 @@ function is_undef(val) {
     return val === undefined ? true : false;
 }
 
-function open_foo(e) { }
+function open_foo(e) {
+}
 
 function close_foo(e) {
     if (e.wasClean) {
@@ -167,3 +296,4 @@ send_seq_in.onclick = function () {
         "file_send_seq": file_send_seq
     });
 }
+*/
